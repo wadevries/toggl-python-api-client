@@ -2,7 +2,6 @@ import requests
 
 
 class TogglClientApi:
-
     defaultCredentials = {
         'token': '',
         'username': '',
@@ -21,9 +20,11 @@ class TogglClientApi:
     requests = None
 
     def __init__(self, credentials):
-        self.credentials = dict(self.defaultCredentials.items() + credentials.items())
+        self.credentials = self.defaultCredentials.copy()
+        self.credentials.update(credentials)
         self.api_base_url = self.build_api_url(self.credentials['base_url'], self.credentials['ver_api'])
-        self.api_report_base_url = self.build_api_url(self.credentials['base_url_report'], self.credentials['ver_report'])
+        self.api_report_base_url = self.build_api_url(self.credentials['base_url_report'],
+                                                      self.credentials['ver_report'])
         self.api_token = self.credentials['token']
         self.api_username = self.credentials['username']
         return
@@ -34,7 +35,7 @@ class TogglClientApi:
 
     def get_workspace_by_name(self, name):
         workspace_found = None
-        list_response = self.get_workspaces();
+        list_response = self.get_workspaces()
 
         if list_response.status_code != requests.codes.ok:
             list_response.raise_for_status()
@@ -47,16 +48,17 @@ class TogglClientApi:
         return workspace_found
 
     def get_workspaces(self):
-        return self.query('/workspaces');
+        return self.query('/workspaces')
 
     def get_workspace_members(self, workspace_id):
-        response = self.query('/workspaces/'+str(workspace_id)+'/workspace_users');
+        response = self.query('/workspaces/' + str(workspace_id) + '/workspace_users')
         return response
 
     """
     @param start_date YYYY-MM-DD
     @param end_date YYYY-MM-DD
     """""
+
     def get_user_hours_range(self, user_agent, workspace_id, user_id, start_date, end_date):
         params = {
             'workspace_id': workspace_id,
@@ -78,10 +80,14 @@ class TogglClientApi:
 
         return time_total
 
-    def query_report(self, url, params={}, method='GET'):
+    def query_report(self, url, params=None, method='GET'):
+        if params is None:
+            params = {}
         return self._query(self.api_report_base_url, url, params, method)
 
-    def query(self, url, params={}, method='GET'):
+    def query(self, url, params=None, method='GET'):
+        if params is None:
+            params = {}
         return self._query(self.api_base_url, url, params, method)
 
     def _query(self, base_url, url, params, method):
